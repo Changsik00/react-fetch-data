@@ -1,38 +1,44 @@
+import { z } from 'zod';
+
 /**
- * DTO (Data Transfer Object) Definitions
- * Defines the shape of data returned by the API.
+ * DTO (Data Transfer Object) Schemas
+ * Defines the shape of data returned by the API using Zod for runtime validation.
  * Source: https://jsonplaceholder.typicode.com
  */
 
-export interface GeoDTO {
-  lat: string;
-  lng: string;
-}
+export const GeoSchema = z.object({
+  lat: z.string(),
+  lng: z.string(),
+});
+export type GeoDTO = z.infer<typeof GeoSchema>;
 
-export interface AddressDTO {
-  street: string;
-  suite: string;
-  city: string;
-  zipcode: string;
-  geo: GeoDTO;
-}
+export const AddressSchema = z.object({
+  street: z.string(),
+  suite: z.string(),
+  city: z.string(),
+  zipcode: z.string(),
+  geo: GeoSchema,
+});
+export type AddressDTO = z.infer<typeof AddressSchema>;
 
-export interface CompanyDTO {
-  name: string;
-  catchPhrase: string;
-  bs: string;
-}
+export const CompanySchema = z.object({
+  name: z.string(),
+  catchPhrase: z.string(),
+  bs: z.string(),
+});
+export type CompanyDTO = z.infer<typeof CompanySchema>;
 
-export interface UserResponseDTO {
-  id: number;
-  name: string;
-  username: string;
-  email: string;
-  address: AddressDTO;
-  phone: string;
-  website: string;
-  company: CompanyDTO;
-}
+export const UserResponseSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  username: z.string(),
+  email: z.string().email(), // Added email validation
+  address: AddressSchema,
+  phone: z.string(),
+  website: z.string(),
+  company: CompanySchema,
+});
+export type UserResponseDTO = z.infer<typeof UserResponseSchema>;
 
 /**
  * API Endpoint Management
