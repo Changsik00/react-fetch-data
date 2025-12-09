@@ -1,5 +1,6 @@
 import { apiClient } from '../api/client';
 import type { IUserRepository, User } from './IUserRepository';
+import { API } from '../api/endpoints';
 
 export class UserRepository implements IUserRepository {
   async getUser(id: number): Promise<User> {
@@ -9,15 +10,14 @@ export class UserRepository implements IUserRepository {
     const cachedData = localStorage.getItem(cacheKey);
     if (cachedData) {
       console.log(`[Repository] Fetching user ${id} from Local Storage`);
-      // Simulate async delay to show Suspense if strictly needed, 
-      // but usually local is fast. We return immediately.
-      // However, to ensure interface consistency:
       return JSON.parse(cachedData);
     }
 
     // 2. Fallback to API (Remote)
-    console.log(`[Repository] Fetching user ${id} from Remote API`);
-    const user = await apiClient.get(`users/${id}`).json<User>();
+    const endpoint = API.USERS.DETAIL(id);
+    console.log(`[Repository] Fetching user ${id} from Remote API: ${endpoint.url}`);
+    
+    const user = await apiClient.get(endpoint.url).json<User>();
 
     // 3. Save to Local Storage
     try {
