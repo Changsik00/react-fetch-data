@@ -1,73 +1,85 @@
-# React + TypeScript + Vite
+# React Data Fetching Architecture
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+이 프로젝트는 **React** 환경에서 **데이터 패칭(Data Fetching)**과 **상태 관리(State Management)**를 가장 효율적이고 모던하게 처리하기 위한 아키텍처를 구현한 예제입니다.
 
-Currently, two official plugins are available:
+**Clean Architecture**의 사상을 받아들여 UI와 비즈니스 로직, 데이터 소스 계층을 명확히 분리하고, **Ky**와 **Tanstack Query**를 조합하여 강력한 에러 핸들링과 캐싱 전략을 구축했습니다.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🛠 Tech Stack
 
-## React Compiler
+- **Core**: React 18, TypeScript, Vite
+- **Data Fetching**: [Ky](https://github.com/sindresorhus/ky) (HTTP Client), [Axios 대신 선택]
+- **State Management**: [Tanstack Query v5](https://tanstack.com/query/latest) (Server State)
+- **Pattern**: Repository Pattern
+- **Utils**: React Error Boundary
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🏗 Architecture & Design Decisions
 
-## Expanding the ESLint configuration
+### 1. Repository Pattern (데이터 계층 분리)
+React 컴포넌트(`UserProfile`)는 데이터를 어디서 가져오는지 알 필요가 없습니다. 단순히 "사용자 정보를 달라"고 요청할 뿐입니다.
+`Repository` 계층이 그 요청을 받아 **Local Storage(캐시)**에 데이터가 있는지 확인하고, 없으면 **Remote API**를 호출합니다.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```mermaid
+graph LR
+    UI[Component] --> Hook[useSuspenseQuery]
+    Hook --> Repo[UserRepository]
+    
+    Repo --> Check{Local Data?}
+    Check -- Yes --> Local[LocalStorage]
+    Check -- No --> Remote[Ky HTTP Client]
+    
+    Remote --> API[External API]
+    API --> Remote
+    Remote --> Save[Save to Local] --> Repo
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Ky over Axios (HTTP Client)
+왜 **Axios** 대신 **Ky**를 선택했나요?
+- **Modern Standard**: 구형 `XMLHttpRequest`가 아닌 모던 브라우저 표준 `fetch` API 기반입니다.
+- **Lightweight**: 번들 사이즈가 훨씬 작습니다.
+- **Better Hooks**: `beforeError` 같은 훅을 통해 에러를 더 세련되게 가공할 수 있습니다.
+- **Native Retry**: 재시도(Retry) 로직이 내장되어 있습니다.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 3. Centralized Error Handling (에러 처리 전략)
+HTTP 에러, 네트워크 끊김, 타임아웃 등 다양한 에러 상황을 명확하게 구분하기 위해 커스텀 에러 클래스를 정의했습니다.
+`Ky`의 인터셉터(`hooks.beforeError`)에서 모든 에러를 아래 3가지 유형으로 정규화(Normalize)합니다.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- **`NetworkError`**: 인터넷 연결 끊김 등 아예 요청이 실패한 경우
+- **`TimeoutError`**: 서버 응답이 지정된 시간 내에 오지 않은 경우
+- **`APIError`**: 서버가 4xx, 5xx 응답을 내려준 경우
+
+이를 통해 UI의 `ErrorBoundary`에서는 에러 타입에 따라 사용자에게 정확한 가이드를 제공할 수 있습니다.
+
+## 📂 Project Structure
+
+```bash
+src/
+├── api/
+│   ├── client.ts       # Ky 인스턴스 설정 (Interceptor, Timeout 등)
+│   └── errors.ts       # 커스텀 에러 클래스 정의 (APIError 등)
+├── repositories/
+│   ├── IUserRepository.ts  # Repository 인터페이스 (DIP 준수)
+│   └── UserRepository.ts   # 구현체 (Local/Remote 분기 로직 포함)
+├── hooks/
+│   └── queries/        # Tanstack Query 훅 모음 (useUser 등)
+├── components/
+│   ├── ErrorFallback.tsx   # 에러 발생 시 보여줄 Fallback UI
+│   └── UserProfile.tsx     # 데이터 표시 UI (Suspense 지원)
+├── App.tsx             # 메인 앱 (ErrorBoundary & Suspense 구성)
+└── main.tsx            # Entry Point (QueryClient 설정)
 ```
+
+## 🚀 How to Run
+
+```bash
+# 의존성 설치
+npm install
+
+# 개발 서버 실행
+npm run dev
+```
+
+## 🧪 Testing Scenarios
+
+1.  **Happy Path**: `User 1` 버튼 클릭 -> 로딩(Suspense) -> 데이터 표시. 새로고침 시 로컬 스토리지에서 즉시 로드.
+2.  **API Error**: `User 99999` 클릭 -> 404 발생 -> `APIError` throw -> ErrorBoundary가 "Error 404" 표시.
+3.  **Network Error**: 개발자 도구 Network 탭에서 `Offline` 설정 -> 버튼 클릭 -> `NetworkError` throw -> "인터넷 연결을 확인해주세요" 표시.
