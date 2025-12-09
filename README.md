@@ -8,6 +8,7 @@
 
 - **Core**: React 18, TypeScript, Vite
 - **Data Fetching**: [Ky](https://github.com/sindresorhus/ky) (HTTP Client), [Axios 대신 선택]
+- **Validation**: [Zod](https://zod.dev/) (Runtime Schema Validation)
 - **State Management**: [Tanstack Query v5](https://tanstack.com/query/latest) (Server State)
 - **Pattern**: Repository Pattern
 - **Utils**: React Error Boundary
@@ -46,6 +47,23 @@ HTTP 에러, 네트워크 끊김, 타임아웃 등 다양한 에러 상황을 �
 - **`NetworkError`**: 인터넷 연결 끊김 등 아예 요청이 실패한 경우
 - **`TimeoutError`**: 서버 응답이 지정된 시간 내에 오지 않은 경우
 - **`APIError`**: 서버가 4xx, 5xx 응답을 내려준 경우
+
+### 4. Zod Runtime Validation (런타임 데이터 검증)
+TypeScript는 컴파일 타임에만 타입을 체크하지만, 실제 서버에서 내려오는 데이터가 우리가 예상한 타입과 다를 수 있습니다.
+이 프로젝트에서는 **Zod**를 사용하여 API 응답 데이터를 런타임에 검증합니다.
+
+```typescript
+// Define Schema
+export const UserSchema = z.object({
+  id: z.number(),
+  email: z.string().email(), // 이메일 형식 검증
+  // ...
+});
+
+// Validate in Repository
+const rawData = await api.get('...').json();
+const user = UserSchema.parse(rawData); // 형식이 맞지 않으면 ZodError 발생 -> ErrorBoundary 포착
+```
 
 이를 통해 UI의 `ErrorBoundary`에서는 에러 타입에 따라 사용자에게 정확한 가이드를 제공할 수 있습니다.
 
