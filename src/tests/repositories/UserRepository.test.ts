@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { userRepository } from './UserRepository';
-import { server } from '../mocks/server';
+import { userRepository } from '../../repositories/UserRepository';
+import { server } from '../../mocks/server';
 import { http, HttpResponse } from 'msw';
-import { APIError } from '../api/errors';
+import { APIError } from '../../api/errors';
 
 const BASE_URL = 'https://jsonplaceholder.typicode.com';
 
