@@ -98,6 +98,8 @@ pnpm dev
 
 ## 🧪 Testing Scenarios
 
+> 자세한 테스트 가이드는 [TESTING.md](./docs/TESTING.md)를 참고하세요.
+
 1.  **Happy Path**: `User 1` 버튼 클릭 -> 로딩(Suspense) -> 데이터 표시. 새로고침 시 로컬 스토리지에서 즉시 로드.
 2.  **API Error**: `User 99999` 클릭 -> 404 발생 -> `APIError` throw -> ErrorBoundary가 "Error 404" 표시.
 3.  **Network Error**: 개발자 도구 Network 탭에서 `Offline` 설정 -> 버튼 클릭 -> `NetworkError` throw -> "인터넷 연결을 확인해주세요" 표시.
