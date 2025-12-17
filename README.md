@@ -12,6 +12,8 @@
 - **State Management**: [Tanstack Query v5](https://tanstack.com/query/latest) (Server State)
 - **Pattern**: Repository Pattern
 - **Utils**: React Error Boundary
+- **Testing**: Vitest + MSW for robust unit and integration testing
+- **Infinite Query**: Supports pagination and infinite scrolling for user lists
 
 ## 🏗 Architecture & Design Decisions
 

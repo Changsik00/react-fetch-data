@@ -1,8 +1,16 @@
 import { apiClient } from '../api/client';
 import type { IUserRepository, User } from './IUserRepository';
-import { API, UserResponseSchema } from '../api/endpoints';
+import { API, UserResponseSchema, UserListResponseSchema } from '../api/endpoints';
 
 export class UserRepository implements IUserRepository {
+  async getUsers(page: number, limit: number): Promise<User[]> {
+    const endpoint = API.USERS.LIST(page, limit);
+    console.log(`[Repository] Fetching users page ${page} from Remote API: ${endpoint.url}`);
+
+    const rawData = await apiClient.get(endpoint.url).json();
+    return UserListResponseSchema.parse(rawData);
+  }
+
   async getUser(id: number): Promise<User> {
     const cacheKey = `user_${id}`;
     

@@ -1,6 +1,7 @@
 import { useState, Suspense } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { UserProfile } from './components/UserProfile'
+import { UserList } from './components/UserList'
 import { ErrorFallback } from './components/ErrorFallback'
 import { useQueryErrorResetBoundary } from '@tanstack/react-query'
 
@@ -28,6 +29,8 @@ function App() {
           <UserProfile userId={userId} />
         </Suspense>
       </ErrorBoundary>
+
+      <UserList />
     </div>
   )
 }

@@ -6,4 +6,5 @@ export type User = UserResponseDTO;
 
 export interface IUserRepository {
   getUser(id: number): Promise<User>;
+  getUsers(page: number, limit: number): Promise<User[]>;
 }

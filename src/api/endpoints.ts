@@ -39,6 +39,7 @@ export const UserResponseSchema = z.object({
   company: CompanySchema,
 });
 export type UserResponseDTO = z.infer<typeof UserResponseSchema>;
+export const UserListResponseSchema = z.array(UserResponseSchema);
 
 /**
  * API Endpoint Management
@@ -51,9 +52,9 @@ export const API = {
       url: `users/${id}`,
       method: 'get' as const,
     }),
-    // Get all users (if needed in future)
-    LIST: () => ({
-      url: `users`,
+    // Get paginated users
+    LIST: (page: number = 1, limit: number = 5) => ({
+      url: `users?_page=${page}&_limit=${limit}`,
       method: 'get' as const,
     })
   },
